@@ -9,7 +9,7 @@ from docx.oxml.shared import OxmlElement, qn
 
 # Set page config
 st.set_page_config(
-    page_title="Masih Traders - Bill & Quotation Generator",
+    page_title="Quotation Generator",
     page_icon="🏭",
     layout="wide"
 )
@@ -42,7 +42,7 @@ st.markdown("""
         margin: 10px 0;
     }
     .section-header {
-        font-size: 2.0em;
+        font-size: 1.1em;
         font-weight: bold;
         color: #b9c1bb;
         margin-top: 20px;
@@ -55,18 +55,26 @@ if 'items' not in st.session_state:
     st.session_state["items"] = []
 
 # Main header
-st.markdown('<div class="main-header">MASIH TRADERS</div>', unsafe_allow_html=True)
-st.markdown('<div class="doc-header">Bill & Quotation Generator</div>', unsafe_allow_html=True)
+st.markdown('<div class="doc-header">Quotation Generator</div>', unsafe_allow_html=True)
 
 # Sidebar for main inputs
 with st.sidebar:
     st.header("📋 Basic Information")
     
+    # Business name input (customizable)
+    business_name = st.text_input("Business/Organization Name", value="MASIH TRADERS")
+
+    #GSTIN
+    gstin = st.text_input("Enter GSTIN",value = "09AMIPM2416L1ZT")
+
+    #Contact
+    contact = st.text_input("Enter Contact Number", value = "9839 710 370")
+
     # Customer name
     customer_name = st.text_input("Customer Name", placeholder="Enter customer name")
     
     # Document type
-    doc_type = st.selectbox("Document Type", ["QUOTATION", "BILL"])
+    doc_type = st.selectbox("Document Type", ["QUOTATION"])
     
     # Date
     doc_date = st.date_input("Date", datetime.now())
@@ -209,7 +217,7 @@ with col_preview:
     if st.button("📋 Preview Document", type="primary"):
         if customer_name and st.session_state["items"]:
             st.markdown("---")
-            st.markdown(f"**MASIH TRADERS**")
+            st.markdown(f"**{business_name}**")
             st.markdown(f"**[{doc_type}] Date: {formatted_date}**")
             st.markdown(f"**To,**  \n**{customer_name}**")
             
@@ -254,7 +262,7 @@ with col_download:
         
         # Header with GSTIN and Contact
         header_para = doc.add_paragraph()
-        header_run = header_para.add_run('GSTIN: 09AMIPM2416L1ZT		                                                                                    Contact: +91 9839 710 370')
+        header_run = header_para.add_run(f'GSTIN: {gstin}		                                                                                    Contact: +91 {contact}')
         header_run.font.name = 'Calibri'
         header_run.font.size = Pt(12)
         header_run.bold = True
@@ -262,7 +270,7 @@ with col_download:
         
         # Main heading
         main_heading = doc.add_paragraph()
-        main_heading_run = main_heading.add_run('MASIH TRADERS')
+        main_heading_run = main_heading.add_run(business_name)
         main_heading_run.font.name = 'Adobe Garamond Pro Bold'
         main_heading_run.font.size = Pt(40)
         main_heading_run.bold = True
@@ -443,4 +451,4 @@ if st.button("🗑️ Clear All Data", type="secondary"):
 
 # Footer
 st.markdown("---")
-st.markdown("*Masih Traders - Bill & Quotation Generator v1.0*")
+st.markdown("*Quotation Generator v1.0*")
