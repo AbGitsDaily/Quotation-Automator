@@ -395,7 +395,7 @@ with col_download:
         # Material used
         if additional_materials:
             material_header = doc.add_paragraph()
-            material_header_run = material_header.add_run('Material Used:')
+            material_header_run = material_header.add_run(f'Material Used: {material_type}')
             material_header_run.bold = True
             material_header_run.font.name = 'Calibri'
             material_header_run.font.size = Pt(14)
