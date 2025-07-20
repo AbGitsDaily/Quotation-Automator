@@ -176,9 +176,10 @@ with col2:
     # Material used
     st.markdown('<div class="section-header">🔧 Material Used</div>', unsafe_allow_html=True)
     material_type = st.selectbox("Material Type", ["MS (Mild Steel)", "SS (Stainless Steel)"])
+    material_grade = st.text_area("Material Grade/Detail", placeholder="e.g., 16 g - 304")
     
     # Additional materials
-    additional_materials = st.text_area("Additional Materials", 
+    additional_materials = st.text_area("Section Used:", 
                                        placeholder="e.g., Apollo Pipe: 2x4\" (30 kg)\nBidding: 25x5\"\nCNC Sheet: 3MM",
                                        height=100)
     
@@ -391,15 +392,14 @@ with col_download:
                     for run in paragraph.runs:
                         run.bold = True
         
-        doc.add_paragraph()
         # Material used
         if additional_materials:
+            material_full = f"{material_type} {material_grade}" if material_grade else material_type
             material_header = doc.add_paragraph()
-            material_header_run = material_header.add_run(f'Material Used: {material_type}')
+            material_header_run = material_header.add_run(f'Material Used: {material_full}')
             material_header_run.bold = True
             material_header_run.font.name = 'Calibri'
             material_header_run.font.size = Pt(14)
-            
             
             for material in additional_materials.split('\n'):
                 if material.strip():
@@ -407,6 +407,7 @@ with col_download:
                     material_run = material_para.add_run(f"• {material.strip()}")
                     material_run.font.name = 'Calibri'
                     material_run.font.size = Pt(14)
+
         
         # Terms and conditions
         if selected_terms:
