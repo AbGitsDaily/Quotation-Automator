@@ -489,6 +489,18 @@ with col_download:
             bal_row[1].text = ""
             bal_row[2].text = "Balance"
             bal_row[3].text = f"₹{max(0.0, amount_chargeable - advance):,.2f}"
+        # ✅ Make Advance & Balance rows bold
+        for row in [adv_row, bal_row]:
+            for cell in row[2:]:  # only the last two columns (label + amount)
+                for paragraph in cell.paragraphs:
+                    for run in paragraph.runs:
+                        run.bold = True
+                        run.font.name = 'Calibri'
+        # ✅ Align all text in the last column (amounts) to the right
+        for row in table.rows:
+            last_cell = row.cells[-1]  # last column
+            for paragraph in last_cell.paragraphs:
+                paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
 
         # Material used
         if additional_materials:
