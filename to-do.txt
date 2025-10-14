@@ -1,0 +1,5 @@
+remove compulsory required fields.
+add option for inserting amount of the item also
+add the feature of calculating and inserting gst
+fix all text size to 12 in main bodylufix spacing to 1.0 in main body
+fix customer name size to 16
