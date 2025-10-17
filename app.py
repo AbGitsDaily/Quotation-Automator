@@ -65,10 +65,10 @@ with st.sidebar:
     business_name = st.text_input("Business/Organization Name", value="MASIH TRADERS")
 
     #GSTIN
-    gstin = st.text_input("Enter GSTIN",value = "09AMIPM2416L1ZT")
+    gstin = st.text_input("Enter GSTIN", value="09AMIPM2416L1ZT")
 
     #Contact
-    contact = st.text_input("Enter Contact Number", value = "9839 710 370")
+    contact = st.text_input("Enter Contact Number", value="9839 710 370")
 
     # Customer name
     customer_name = st.text_input("Customer Name", placeholder="Enter customer name")
@@ -95,7 +95,7 @@ with col1:
         st.markdown("**Select Entry Mode:**")
         entry_mode = st.radio(
             "Select how you want to enter item details:",
-            ["Quantity + Rate", "Quantity + Amount", "Rate + Amount"],
+            ["Quantity + Rate", "Quantity + Amount", "Rate + Amount", "Amount Only"],
             horizontal=True,
             key="entry_mode"
         )
@@ -131,6 +131,9 @@ with col1:
             rate = st.number_input("Rate (₹)", min_value=0.0, step=0.01, key="item_rate_ra")
             amount = st.number_input("Amount (₹)", min_value=0.0, step=0.01, key="item_amount_ra")
 
+        elif entry_mode == "Amount Only":
+            amount = st.number_input("Amount (₹)", min_value=0.0, step=0.01, key="item_amount_only")
+
         st.write(f"**Item Total: ₹{amount:,.2f}**")
 
         # Add item
@@ -148,8 +151,6 @@ with col1:
             st.success(f"Added: {new_item['name']}")
             st.rerun()
 
-
-
     # Display added items
     if st.session_state["items"]:
         st.markdown('<div class="section-header">Added Items</div>', unsafe_allow_html=True)
@@ -158,7 +159,17 @@ with col1:
             col_item, col_remove = st.columns([4, 1])
             
             with col_item:
-                st.write(f"**{i+1}. {item['name']}:** {item['specification']} -- {item['quantity']} {item['unit']} @{item['rate']} = ₹{item['total']:,.2f}")
+                mode = item.get("mode", "Quantity + Rate")
+                spec_text = f": {item['specification']}" if item.get('specification') else ""
+                
+                if mode == "Amount Only":
+                    st.write(f"**{i+1}. {item['name']}{spec_text}** -- ₹{item['total']:,.2f}")
+                elif mode == "Quantity + Amount":
+                    st.write(f"**{i+1}. {item['name']}{spec_text}** -- {item['quantity']} {item['unit']} = ₹{item['total']:,.2f}")
+                elif mode == "Rate + Amount":
+                    st.write(f"**{i+1}. {item['name']}{spec_text}** -- @₹{item['rate']:.2f} = ₹{item['total']:,.2f}")
+                else:  # Quantity + Rate
+                    st.write(f"**{i+1}. {item['name']}{spec_text}** -- {item['quantity']} {item['unit']} @₹{item['rate']:.2f} = ₹{item['total']:,.2f}")
             
             with col_remove:
                 if st.button("❌", key=f"remove_{i}"):
@@ -209,46 +220,65 @@ with col2:
     # Balance after advance
     balance = max(0.0, amount_chargeable - advance)
     st.write(f"**Balance Amount: ₹{balance:,.2f}**")
-
-
-    # Calculate balance
-    # st.write(
-    #     f"**Balance Amount: ₹{sum(item['total'] for item in st.session_state['items']) - advance:,.2f}**")
     
-    # Material used
+    # -----------------------------
+    # MATERIALS (multiple sections)
+    # -----------------------------
     st.markdown('<div class="section-header">🔧 Material Used</div>', unsafe_allow_html=True)
-    material_type = st.selectbox("Material Type", ["MS (Mild Steel)", "SS (Stainless Steel)","Aluminium"])
-    material_grade = st.text_area("Material Grade/Detail", placeholder="e.g., 16 g - 304")
-    
-    # Additional materials
-    additional_materials = st.text_area("Section Used:", 
-                                       placeholder="e.g., Apollo Pipe: 2x4\" (30 kg)\nBidding: 25x5\"\nCNC Sheet: 3MM",
-                                       height=100)
-    
-    # Terms and conditions
-    st.markdown('<div class="section-header">📜 Terms & Conditions</div>', unsafe_allow_html=True)
-    
-    terms_options = {
-        "advance_payment": "75% Advance Payment",
-        "workshop_payment": "25% Payment at workshop before delivery",
-        "gst_applicable": "18% GST applicable on online payments, invoice will be provided",
-        "pit_digging": "Pit digging before gate installation is customer's responsibility",
-        "primer_not_included": "Primer application is not included",
-        "fiber_sheet_extra": "Fiber Sheet charges will be extra",
-        "cartage_extra": "Cartage charges will be extra",
-        "black_gate_design": "Quotation based on Black Gate Design",
-        "completion_time": "The work is said to be completed within 30 days after the date of the advance payment"
-    }
-    
-    selected_terms = []
-    for key, term in terms_options.items():
-        if st.checkbox(term, key=key):
-            selected_terms.append(term)
-    
-    # Custom terms
-    custom_terms = st.text_area("Custom Terms", placeholder="Add any custom terms and conditions")
-    if custom_terms:
-        selected_terms.extend(custom_terms.split('\n'))
+
+    # Ensure materials list exists
+    if "materials" not in st.session_state:
+        st.session_state["materials"] = []  # each entry: {"type":..., "grade":..., "details":[...]}
+
+    # Expander to add a new material section
+    with st.expander("➕ Add Material Section", expanded=False):
+        mat_type = st.selectbox("Material Type", ["MS (Mild Steel)", "SS (Stainless Steel)", "Aluminium"], key="mat_type_input")
+        mat_grade = st.text_input("Material Grade/Detail", placeholder="e.g., 16 g - 304", key="mat_grade_input")
+        mat_details = st.text_area(
+            "Section Used (one item per line)",
+            placeholder='e.g., 1" Sq Pipe\n0.5" Sq Pipe\nCNC Sheet: 3MM',
+            height=120,
+            key="mat_details_input"
+        )
+
+        if st.button("Add Material Section", key="add_material_btn"):
+            details_lines = [line.strip() for line in mat_details.split("\n") if line.strip()]
+            if not details_lines:
+                st.error("Please enter at least one material detail (one per line).")
+            else:
+                st.session_state["materials"].append({
+                    "type": mat_type,
+                    "grade": mat_grade.strip(),
+                    "details": details_lines
+                })
+                st.success(f"Added material section: {mat_type} {mat_grade}".strip())
+                st.rerun()
+
+    # Display added material sections (with remove option)
+    if st.session_state["materials"]:
+        st.markdown("### Added Material Sections")
+        for idx, mat in enumerate(st.session_state["materials"]):
+            with st.expander(f"{idx+1}. {mat['type']} {mat['grade']}".strip(), expanded=False):
+                st.write("**Details:**")
+                for d in mat["details"]:
+                    st.write(f"- {d}")
+                cols = st.columns([1, 1, 3])
+                with cols[0]:
+                    if st.button("Edit", key=f"edit_mat_{idx}"):
+                        # Prefill inputs for quick edit (simple approach)
+                        st.session_state["mat_edit_index"] = idx
+                        st.session_state["mat_type_input"] = mat["type"]
+                        st.session_state["mat_grade_input"] = mat["grade"]
+                        st.session_state["mat_details_input"] = "\n".join(mat["details"])
+                        st.rerun()
+                with cols[1]:
+                    if st.button("❌ Remove", key=f"remove_mat_{idx}"):
+                        st.session_state["materials"].pop(idx)
+                        st.success("Removed.")
+                        st.rerun()
+                with cols[2]:
+                    st.markdown("<small>Use Edit to load this section back into the Add form for quick changes.</small>", unsafe_allow_html=True)
+
 
 # Generate document section
 st.markdown("---")
@@ -259,18 +289,24 @@ col_preview, col_download = st.columns(2)
 with col_preview:
     if st.button("📋 Preview Document", type="primary", key="preview"):
         st.markdown("---")
-        st.markdown(f"**MASIH TRADERS**")
+        st.markdown(f"**{business_name}**")
         st.markdown(f"**[{doc_type}] Date: {formatted_date}**")
         st.markdown(f"**To,**  \n**{customer_name or '—'}**")
 
-        # Items list (optional)
+        # Items list
         if st.session_state["items"]:
             for i, item in enumerate(st.session_state["items"], 1):
+                mode = item.get("mode", "Quantity + Rate")
                 spec_text = f": {item['specification']}" if item.get('specification') else ""
-                qty_text = f"{item.get('quantity', '')} {item.get('unit','')}".strip()
-                rate_text = f"@{item.get('rate','')}" if not item.get('amount_only') else ""
-                # Show rate only when available
-                st.markdown(f"{i}. **{item['name']}{spec_text}** -- {qty_text} {rate_text} {item['total']:.2f}/-")
+                
+                if mode == "Amount Only":
+                    st.markdown(f"{i}. **{item['name']}{spec_text}** = ₹{item['total']:,.2f}")
+                elif mode == "Quantity + Amount":
+                    st.markdown(f"{i}. **{item['name']}{spec_text}** -- {item['quantity']} {item['unit']} = ₹{item['total']:,.2f}")
+                elif mode == "Rate + Amount":
+                    st.markdown(f"{i}. **{item['name']}{spec_text}** -- @₹{item['rate']:,.2f} = ₹{item['total']:,.2f}")
+                else:  # Quantity + Rate
+                    st.markdown(f"{i}. **{item['name']}{spec_text}** -- {item['quantity']} {item['unit']} @₹{item['rate']:,.2f} = ₹{item['total']:,.2f}")
         else:
             st.markdown("_No items added._")
 
@@ -278,20 +314,20 @@ with col_preview:
         subtotal = sum(item['total'] for item in st.session_state["items"]) if st.session_state["items"] else 0.0
         st.markdown(f"**Subtotal:** ₹{subtotal:,.2f}")
 
-        # GST (uses gst controls added in step 3)
-        gst_percent = 0.0 if gst_choice == "None" else float(gst_choice.replace("%",""))
+        # GST
+        gst_percent = 0.0 if gst_choice == "None" else float(gst_choice.replace("%", ""))
         if gst_percent > 0:
             if gst_mode.startswith("Exclusive"):
-                gst_amount = subtotal * gst_percent/100
+                gst_amount = subtotal * gst_percent / 100
                 taxable_base = subtotal
                 amount_chargeable = subtotal + gst_amount
             else:  # Inclusive
-                gst_amount = subtotal * gst_percent/(100 + gst_percent)
+                gst_amount = subtotal * gst_percent / (100 + gst_percent)
                 taxable_base = subtotal - gst_amount
                 amount_chargeable = subtotal
 
-            cgst = gst_amount/2
-            sgst = gst_amount/2
+            cgst = gst_amount / 2
+            sgst = gst_amount / 2
 
             st.markdown(f"**CGST @{gst_percent/2:.2f}%:** ₹{cgst:,.2f}")
             st.markdown(f"**SGST @{gst_percent/2:.2f}%:** ₹{sgst:,.2f}")
@@ -304,7 +340,6 @@ with col_preview:
         if advance > 0:
             st.markdown(f"**Advance:** ₹{advance:,.2f}")
             st.markdown(f"**Balance:** ₹{max(0, amount_chargeable - advance):,.2f}")
-
 
 with col_download:
     def create_word_document():
@@ -319,7 +354,7 @@ with col_download:
         
         # Header with GSTIN and Contact
         header_para = doc.add_paragraph()
-        header_run = header_para.add_run(f'GSTIN: {gstin}		                                                                                    Contact: +91 {contact}')
+        header_run = header_para.add_run(f'GSTIN: {gstin}\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tContact: +91 {contact}')
         header_run.font.name = 'Calibri'
         header_run.font.size = Pt(12)
         header_run.bold = True
@@ -332,16 +367,7 @@ with col_download:
         main_heading_run.font.size = Pt(40)
         main_heading_run.bold = True
         main_heading.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        main_heading.paragraph_format.space_after = Pt(4)
-
-        # # 🔧 Adjust spacing below heading
-        main_heading.paragraph_format.space_after = Pt(9) # reduce space below
-        
-        # # Underline (line of underscores)
-        # underline_para = doc.add_paragraph()
-        # underline_run = underline_para.add_run('_' * 98)
-        # underline_run.font.name = 'Calibri'
-        # underline_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        main_heading.paragraph_format.space_after = Pt(9)
         
         # Document type and date in separate paragraphs
         doc_type_para = doc.add_paragraph()
@@ -361,14 +387,10 @@ with col_download:
         
         # Customer info
         customer_para = doc.add_paragraph()
-
-        # "To,"
         customer_run1 = customer_para.add_run("To,")
         customer_run1.font.size = Pt(16)
         customer_run1.font.name = "Calibri"
         customer_run1.bold = True
-
-        # Customer name
         customer_run2 = customer_para.add_run(f"\n{customer_name}")
         customer_run2.font.size = Pt(16)
         customer_run2.font.name = "Calibri"
@@ -401,11 +423,6 @@ with col_download:
             row_cells[0].text = f"{i}. {item['name']}{spec_text}"
 
             mode = item.get("mode", "Quantity + Rate")
-            spec_text = f": {item['specification']}" if item['specification'] else ""
-
-            qty_part = f"{item['quantity']} {item['unit']}" if mode in ["Quantity + Rate", "Quantity + Amount"] else "—"
-            rate_part = f"@₹{item['rate']:.2f}/{item['unit']}" if mode in ["Quantity + Rate", "Rate + Amount"] and item['unit'] else "—"
-            st.markdown(f"{i}. **{item['name']}{spec_text}** — {qty_part} {rate_part} = ₹{item['total']:.2f}")
             qty_text = ""
             rate_text = ""
             amt_text = f"₹{item.get('total', 0):,.2f}"
@@ -423,18 +440,22 @@ with col_download:
             # Rate + Amount
             elif mode == "Rate + Amount":
                 qty_text = "—"
-                rate_text = f"₹{item.get('rate', 0):,.2f}/{item.get('unit', '') if item.get('unit') else ''}"
+                rate_text = f"₹{item.get('rate', 0):,.2f}"
+
+            # Amount Only
+            elif mode == "Amount Only":
+                qty_text = "—"
+                rate_text = "—"
 
             row_cells[1].text = qty_text
             row_cells[2].text = rate_text
             row_cells[3].text = amt_text
 
-
         # Subtotal and GST rows
         subtotal = sum(item['total'] for item in st.session_state["items"]) if st.session_state["items"] else 0.0
 
         # Compute GST exactly like in the UI
-        gst_percent = 0.0 if gst_choice == "None" else float(gst_choice.replace("%",""))
+        gst_percent = 0.0 if gst_choice == "None" else float(gst_choice.replace("%", ""))
         if gst_percent > 0:
             if gst_mode.startswith("Exclusive"):
                 gst_amount = subtotal * gst_percent / 100.0
@@ -489,38 +510,50 @@ with col_download:
             bal_row[1].text = ""
             bal_row[2].text = "Balance"
             bal_row[3].text = f"₹{max(0.0, amount_chargeable - advance):,.2f}"
-        # ✅ Make Advance & Balance rows bold
-        for row in [adv_row, bal_row]:
-            for cell in row[2:]:  # only the last two columns (label + amount)
-                for paragraph in cell.paragraphs:
-                    for run in paragraph.runs:
-                        run.bold = True
-                        run.font.name = 'Calibri'
-        # ✅ Align all text in the last column (amounts) to the right
+
+            # Make both rows bold
+            for row in [adv_row, bal_row]:
+                for cell in row[2:]:
+                    for paragraph in cell.paragraphs:
+                        for run in paragraph.runs:
+                            run.bold = True
+                            run.font.name = 'Calibri'
+
+        # Align all text in the last column (amounts) to the right
         for row in table.rows:
-            last_cell = row.cells[-1]  # last column
+            last_cell = row.cells[-1]
             for paragraph in last_cell.paragraphs:
                 paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
 
         # Material used
-        if additional_materials:
+        # -----------------------------
+        # WRITE MULTIPLE MATERIAL SECTIONS
+        # -----------------------------
+        if "materials" in st.session_state and st.session_state["materials"]:
+            # add a blank paragraph separator
             doc.add_paragraph()
-            material_header = doc.add_paragraph()
-            # include material type & grade (if added in UI)
-            material_full = f"{material_type} {material_grade}" if 'material_grade' in locals() and material_grade else material_type
-            material_header_run = material_header.add_run(f'Material Used: {material_full}')
-            material_header_run.bold = True
-            material_header_run.font.name = 'Calibri'
-            material_header_run.font.size = Pt(12)
 
-            for material in additional_materials.split('\n'):
-                if material.strip():
-                    material_para = doc.add_paragraph()
-                    material_run = material_para.add_run(f"• {material.strip()}")
-                    material_run.font.name = 'Calibri'
-                    material_run.font.size = Pt(11)
+            for mat in st.session_state["materials"]:
+                # Header for this material block (e.g., "Material Used: SS ...")
+                material_full = f"{mat.get('type','')} {mat.get('grade','')}".strip()
+                material_header = doc.add_paragraph()
+                material_header_run = material_header.add_run(f"Material Used: {material_full}")
+                material_header_run.bold = True
+                material_header_run.font.name = 'Calibri'
+                material_header_run.font.size = Pt(14)
 
-        # Terms and conditions
+                # Proper bullet list using Word's built-in style
+                for detail in mat.get("details", []):
+                    if detail.strip():
+                        material_para = doc.add_paragraph(detail.strip(), style='List Bullet')
+                        for run in material_para.runs:
+                            run.font.name = 'Calibri'
+                            run.font.size = Pt(12)
+
+
+        # -----------------------------
+        # 📜 TERMS & CONDITIONS
+        # -----------------------------
         if selected_terms:
             doc.add_paragraph()
             terms_header = doc.add_paragraph()
@@ -529,15 +562,16 @@ with col_download:
             terms_header_run.font.name = 'Calibri'
             terms_header_run.font.size = Pt(12)
 
+            # Proper bullet list using Word's native style
             for term in selected_terms:
                 if term.strip():
-                    term_para = doc.add_paragraph()
-                    term_run = term_para.add_run(f"• {term.strip()}")
-                    term_run.font.name = 'Calibri'
-                    term_run.font.size = Pt(11)
-
+                    term_para = doc.add_paragraph(term.strip(), style='List Bullet')
+                    for run in term_para.runs:
+                        run.font.name = 'Calibri'
+                        run.font.size = Pt(11)
+        
         return doc
-    
+
     if st.button("📥 Download Word Document", type="secondary"):
         if customer_name and st.session_state["items"]:
             doc = create_word_document()
