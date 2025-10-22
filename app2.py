@@ -53,10 +53,6 @@ st.markdown("""
 # Initialize session state
 if 'items' not in st.session_state:
     st.session_state["items"] = []
-if "materials" not in st.session_state:
-    st.session_state["materials"] = []
-if "selected_terms" not in st.session_state:
-    st.session_state["selected_terms"] = []
 
 # Main header
 st.markdown('<div class="doc-header">Quotation Generator</div>', unsafe_allow_html=True)
@@ -152,14 +148,6 @@ with col1:
                 "mode": entry_mode
             }
             st.session_state["items"].append(new_item)
-            
-            # Clear input fields by removing their keys from session state
-            for key in ["item_name", "item_spec", "item_qty", "item_rate", 
-                       "item_amount_q", "item_rate_ra", "item_amount_ra", 
-                       "item_amount_only", "item_custom_unit"]:
-                if key in st.session_state:
-                    del st.session_state[key]
-            
             st.success(f"Added: {new_item['name']}")
             st.rerun()
 
@@ -238,6 +226,10 @@ with col2:
     # -----------------------------
     st.markdown('<div class="section-header">🔧 Material Used</div>', unsafe_allow_html=True)
 
+    # Ensure materials list exists
+    if "materials" not in st.session_state:
+        st.session_state["materials"] = []  # each entry: {"type":..., "grade":..., "details":[...]}
+
     # Expander to add a new material section
     with st.expander("➕ Add Material Section", expanded=False):
         mat_type = st.selectbox("Material Type", ["MS (Mild Steel)", "SS (Stainless Steel)", "Aluminium"], key="mat_type_input")
@@ -259,12 +251,6 @@ with col2:
                     "grade": mat_grade.strip(),
                     "details": details_lines
                 })
-                
-                # Clear material input fields
-                for key in ["mat_grade_input", "mat_details_input"]:
-                    if key in st.session_state:
-                        del st.session_state[key]
-                
                 st.success(f"Added material section: {mat_type} {mat_grade}".strip())
                 st.rerun()
 
@@ -276,39 +262,50 @@ with col2:
                 st.write("**Details:**")
                 for d in mat["details"]:
                     st.write(f"- {d}")
-                if st.button("❌ Remove", key=f"remove_mat_{idx}"):
-                    st.session_state["materials"].pop(idx)
-                    st.success("Removed.")
-                    st.rerun()
-    
-    # -----------------------------
-    # 📜 TERMS & CONDITIONS SECTION
-    # -----------------------------
-    st.markdown('<div class="section-header">📜 Terms & Conditions</div>', unsafe_allow_html=True)
+                cols = st.columns([1, 1, 3])
+                with cols[0]:
+                    if st.button("Edit", key=f"edit_mat_{idx}"):
+                        # Prefill inputs for quick edit (simple approach)
+                        st.session_state["mat_edit_index"] = idx
+                        st.session_state["mat_type_input"] = mat["type"]
+                        st.session_state["mat_grade_input"] = mat["grade"]
+                        st.session_state["mat_details_input"] = "\n".join(mat["details"])
+                        st.rerun()
+                with cols[1]:
+                    if st.button("❌ Remove", key=f"remove_mat_{idx}"):
+                        st.session_state["materials"].pop(idx)
+                        st.success("Removed.")
+                        st.rerun()
+                with cols[2]:
+                    st.markdown("<small>Use Edit to load this section back into the Add form for quick changes.</small>", unsafe_allow_html=True)
+        # -----------------------------
+        # 📜 TERMS & CONDITIONS SECTION
+        # -----------------------------
+        st.markdown('<div class="section-header">📜 Terms & Conditions</div>', unsafe_allow_html=True)
 
-    terms_options = {
-        "advance_payment": "75% Advance Payment.",
-        "workshop_payment": "25% Payment at workshop before delivery.",
-        "gst_applicable": "18% GST applicable, if invoice required. (Also on Online Payments)",
-        "pit_digging": "Pit digging before gate installation is customer's responsibility.",
-        "primer_not_included": "Primer application is not included.",
-        "fiber_sheet_extra": "Fiber Sheet charges will be extra.",
-        "cartage_extra": "Cartage charges will be extra.",
-        "black_gate_design": "Quotation based on Black Gate Design.",
-        "completion_time": "The work is said to be completed within 30 days after the date of the advance payment."
-    }
+        terms_options = {
+            "advance_payment": "75% Advance Payment.",
+            "workshop_payment": "25% Payment at workshop before delivery.",
+            "gst_applicable": "18% GST applicable, if invoice required. (Also on Online Payments)",
+            "pit_digging": "Pit digging before gate installation is customer's responsibility.",
+            "primer_not_included": "Primer application is not included.",
+            "fiber_sheet_extra": "Fiber Sheet charges will be extra.",
+            "cartage_extra": "Cartage charges will be extra.",
+            "black_gate_design": "Quotation based on Black Gate Design.",
+            "completion_time": "The work is said to be completed within 30 days after the date of the advance payment."
+        }
 
-    selected_terms = []
-    for key, term in terms_options.items():
-        if st.checkbox(term, key=f"term_{key}"):
-            selected_terms.append(term)
+        selected_terms = []
+        for key, term in terms_options.items():
+            if st.checkbox(term, key=f"term_{key}"):
+                selected_terms.append(term)
 
-    custom_terms = st.text_area("Custom Terms", placeholder="Add any custom terms (one per line)", height=80, key="custom_terms_input")
-    if custom_terms:
-        selected_terms.extend([line.strip() for line in custom_terms.split('\n') if line.strip()])
+        custom_terms = st.text_area("Custom Terms", placeholder="Add any custom terms (one per line)", height=80)
+        if custom_terms:
+            selected_terms.extend([line.strip() for line in custom_terms.split('\n') if line.strip()])
 
-    # store for later use
-    st.session_state["selected_terms"] = selected_terms
+        # store for later use
+        st.session_state["selected_terms"] = selected_terms
 
 
 # Generate document section
@@ -371,23 +368,6 @@ with col_preview:
         if advance > 0:
             st.markdown(f"**Advance:** ₹{advance:,.2f}")
             st.markdown(f"**Balance:** ₹{max(0, amount_chargeable - advance):,.2f}")
-
-        # Preview Materials
-        if st.session_state["materials"]:
-            st.markdown("---")
-            st.markdown("**Materials Used:**")
-            for mat in st.session_state["materials"]:
-                material_full = f"{mat.get('type','')} {mat.get('grade','')}".strip()
-                st.markdown(f"**{material_full}**")
-                for detail in mat.get("details", []):
-                    st.markdown(f"- {detail}")
-
-        # Preview Terms
-        if st.session_state["selected_terms"]:
-            st.markdown("---")
-            st.markdown("**Terms & Conditions:**")
-            for term in st.session_state["selected_terms"]:
-                st.markdown(f"- {term}")
 
 with col_download:
     def create_word_document():
@@ -573,10 +553,11 @@ with col_download:
             for paragraph in last_cell.paragraphs:
                 paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
 
+        # Material used
         # -----------------------------
         # WRITE MULTIPLE MATERIAL SECTIONS
         # -----------------------------
-        if st.session_state["materials"]:
+        if "materials" in st.session_state and st.session_state["materials"]:
             # add a blank paragraph separator
             doc.add_paragraph()
 
@@ -597,24 +578,25 @@ with col_download:
                             run.font.name = 'Calibri'
                             run.font.size = Pt(12)
 
+
         # -----------------------------
         # 📜 TERMS & CONDITIONS
         # -----------------------------
-        if st.session_state["selected_terms"]:
+        if selected_terms:
             doc.add_paragraph()
             terms_header = doc.add_paragraph()
             terms_header_run = terms_header.add_run('Terms & Conditions:')
             terms_header_run.bold = True
             terms_header_run.font.name = 'Calibri'
-            terms_header_run.font.size = Pt(14)
+            terms_header_run.font.size = Pt(12)
 
             # Proper bullet list using Word's native style
-            for term in st.session_state["selected_terms"]:
+            for term in selected_terms:
                 if term.strip():
                     term_para = doc.add_paragraph(term.strip(), style='List Bullet')
                     for run in term_para.runs:
                         run.font.name = 'Calibri'
-                        run.font.size = Pt(12)
+                        run.font.size = Pt(11)
 
         return doc
 
@@ -640,8 +622,6 @@ with col_download:
 # Clear all button
 if st.button("🗑️ Clear All Data", type="secondary"):
     st.session_state["items"] = []
-    st.session_state["materials"] = []
-    st.session_state["selected_terms"] = []
     st.rerun()
 
 # Footer
