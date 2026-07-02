@@ -6,11 +6,9 @@ This project was inspired by a real business workflow where creating quotations 
 
 ---
 
-## 🌐 Live Demo
+## 🌐 Try the application online
 
-🚀 Try the application online
-
-https://YOUR-STREAMLIT-LINK.streamlit.app
+https://quotation-automator.streamlit.app/
 
 ---
 
