@@ -8,7 +8,7 @@ This project was inspired by a real business workflow where creating quotations 
 
 ## 🌐 Try the application online
 
-https://quotation-automator.streamlit.app/
+https://universal-quotation-automator.streamlit.app/
 
 ---
 
