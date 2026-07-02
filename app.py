@@ -66,19 +66,19 @@ with st.sidebar:
     st.header("Basic Information")
     
     # Business name input (customizable)
-    business_name = st.text_input("Business/Organization Name", value="MASIH TRADERS")
+    business_name = st.text_input("Business/Organization Name", value="Demo Company")
 
     #GSTIN
-    gstin = st.text_input("Enter GSTIN", value="09AMIPM2416L1ZT")
+    gstin = st.text_input("Enter GSTIN", value="27ABCDE1234F1Z5")
 
     #Contact
-    contact = st.text_input("Enter Contact Number", value="9839 710 370")
+    contact = st.text_input("Enter Contact Number", value="1234567890")
 
     # Customer name
     customer_name = st.text_input("Customer Name", placeholder="Enter customer name")
     
     # Document type
-    doc_type = st.selectbox("Document Type", ["QUOTATION"])
+    doc_type = st.text_input("Document Type", value="QUOTATION")
     
     # Date
     doc_date = st.date_input("Date", datetime.now())
@@ -288,14 +288,23 @@ with col2:
 
     terms_options = {
         "advance_payment": "75% Advance Payment.",
-        "workshop_payment": "25% Payment at workshop before delivery.",
+        "advance_payment_2": "75% advance payment of the total amount is required.",
+        "workshop_payment": "25% payment at complete work before delivery",
         "gst_applicable": "18% GST applicable, if invoice required. (Also on Online Payments)",
         "pit_digging": "Pit digging before gate installation is customer's responsibility.",
         "primer_not_included": "Primer application is not included.",
         "fiber_sheet_extra": "Fiber Sheet charges will be extra.",
         "cartage_extra": "Cartage charges will be extra.",
         "black_gate_design": "Quotation based on Black Gate Design.",
-        "completion_time": "The work is said to be completed within 30 days after the date of the advance payment."
+        "rate_not_fixed": "Rates are valid for 7 days from the quotation date.",
+        "completion_time": "The work is said to be completed within 30 days after the date of the advance payment.",
+        "completion_time2":"The work is said to be completed within 20-25 days after the date of the advance payment.",
+        "completion_time3":"The work is said to be completed within 15-20 days after the date of the advance payment.",
+        "completion_time4":"The work is said to be completed within 10-15 days after the date of the advance payment.",
+        "completion_time5":"The work is said to be completed within 7-10 days after the date of the advance payment.",
+        "finish":"Glossy Finish",
+        "finish2":"Matt Finish",
+        "finish3":"Matte Finish not applicable for 202 Grade",
     }
 
     selected_terms = []
@@ -402,7 +411,7 @@ with col_download:
         
         # Header with GSTIN and Contact
         header_para = doc.add_paragraph()
-        header_run = header_para.add_run(f'GSTIN: {gstin}\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tContact: +91 {contact}')
+        header_run = header_para.add_run(f'GSTIN: {gstin}\t\t\t\t\t\t\t\tContact: +91 {contact}')
         header_run.font.name = 'Calibri'
         header_run.font.size = Pt(12)
         header_run.bold = True
