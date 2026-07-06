@@ -1,11 +1,12 @@
-done remove compulsory required fields.
-done add option for inserting amount of the item also
-done add the feature of calculating and inserting gst
-done fix all text size to 12 in main body fix spacing to 1.0 in main body
-done fix customer name size to 16
+done 1. remove compulsory required fields.
+done 2. add option for inserting amount of the item also
+done 3. add the feature of calculating and inserting gst
+done 4. fix all text size to 12 in main body fix spacing to 1.0 in main body
+done 5. fix customer name size to 16
+done 6. make req fie
 
-done make req fie
-
-change ll font to Times New Roman
-add more Phone Codes like +91
-remove columns of Qty and Rate in the output when only amount is selected
+7. change ll font to Times New Roman
+8. add more Phone Codes like +91
+9. remove columns of Qty and Rate in the output when only amount is selected
+10. add the previous balance/amount thing
+11. make another page for only Masih Traders
