@@ -9,4 +9,8 @@ done 6. make req fie
 8. add more Phone Codes like +91
 9. remove columns of Qty and Rate in the output when only amount is selected
 10. add the previous balance/amount thing
-11. make another page for only Masih Traders
+11. remove rate column if not inputted
+12. remove quantity column if not inputted
+13. make another page for only Masih Traders
+14. make PDF Generation too
+15. Save all data in a google drive with logs of activity
