@@ -14,3 +14,5 @@ done 6. make req fie
 13. make another page for only Masih Traders
 14. make PDF Generation too
 15. Save all data in a google drive with logs of activity
+16. Make the "Specification" space to contain multiple lines or points
+17. Set GST default to None and Inclusive
