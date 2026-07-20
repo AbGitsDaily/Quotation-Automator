@@ -5,8 +5,8 @@ done 4. fix all text size to 12 in main body fix spacing to 1.0 in main body
 done 5. fix customer name size to 16
 done 6. make req fie
 
-7. change ll font to Times New Roman
-8. add more Phone Codes like +91
+7. change all font to Times New Roman
+8. fix spacing between contact and GSTIN
 9. remove columns of Qty and Rate in the output when only amount is selected
 10. add the previous balance/amount thing
 11. remove rate column if not inputted
@@ -16,3 +16,4 @@ done 6. make req fie
 15. Save all data in a google drive with logs of activity
 16. Make the "Specification" space to contain multiple lines or points
 17. Set GST default to None and Inclusive
+18. add more Phone Codes like +91
